@@ -19,16 +19,17 @@ class Language {
 protected:
     const static size_t npos = -1;
 public:
-    struct Lexem {
+    struct Lexem : protected std::string {
         size_t pos;
         size_t line;
-        std::string content;
 
         Lexem (const char* old_st_content, size_t line = npos, size_t pos = npos) : 
-               pos(pos), line(line), content(old_st_content) {}
+               pos(pos), line(line), std::string(old_st_content) {}
         Lexem (const std::string& content, size_t line = npos, size_t pos = npos) : 
-               pos(pos), line(line), content(content) {}
+               pos(pos), line(line), std::string(content) {}
 
+        friend class Language;
+        
         friend bool operator== (const Lexem& lhv, const Lexem& rhv);
         friend bool operator!= (const Lexem& lhv, const Lexem& rhv);
         friend std::ostream& operator<< (std::ostream& stream, Language::Lexem& lex);

@@ -23,15 +23,15 @@ bool isPrefix (const std::string& base, const std::string& pref) {
 }
 
 bool operator== (const Lexem& lhv, const Lexem& rhv) { 
-    return lhv.content == rhv.content;
+    return static_cast<std::string>(lhv) == static_cast<std::string>(rhv);
 }
 
 bool Language::specialLexemComparator (const Lexem& lhv, const Lexem& rhv) {
-    if (lhv.content.length() > rhv.content.length()) return !specialLexemComparator(rhv, lhv);
+    if (lhv.length() > rhv.length()) return !specialLexemComparator(rhv, lhv);
 
-    if (isPrefix(rhv.content, lhv.content)) return false;
+    if (isPrefix(rhv, lhv)) return false;
     
-    return lhv.content < rhv.content;
+    return static_cast<std::string>(lhv) < static_cast<std::string>(rhv);
 }
 
 Language::Language (const std::vector<Lexem>& specialLexems) : 
@@ -39,16 +39,15 @@ Language::Language (const std::vector<Lexem>& specialLexems) :
     std::sort(this->specialLexems.begin(), this->specialLexems.end(), Language::specialLexemComparator);
 }
 
-
 bool operator!= (const Lexem& lhv, const Lexem& rhv) { 
     return !(lhv == rhv);
 }
 
 bool Language::trySpecLexem (const std::string& line, size_t line_no, size_t& pos) {
     for (size_t i = 0; i < specialLexems.size(); i++) {
-        if (isPrefix(line.c_str() + pos, specialLexems[i].content)) {
-            text.push_back(Lexem(specialLexems[i].content, line_no, pos));
-            pos += specialLexems[i].content.length();
+        if (isPrefix(line.c_str() + pos, specialLexems[i])) {
+            text.push_back(Lexem(specialLexems[i], line_no, pos));
+            pos += specialLexems[i].length();
             return true;
         }
     }
@@ -64,7 +63,9 @@ bool Language::tryEmptyLexem (const std::string& line, size_t line_no, size_t& p
         if (empty.find(line[pos]) == std::string::npos) {
             break;
         }
+        if (!res) text.push_back(Lexem("", line_no, pos));
 
+        text.back().push_back(line[pos]);
         res = true;
     }
 
@@ -96,7 +97,7 @@ void Language::processCode (const Text& code) {
 
             if (tryEOLLexem(code.storage[line], line, i)) break;
             if (newlex) text.push_back(Lexem("", line, i));
-            text.back().content.push_back(code.storage[line][i]);
+            text.back().push_back(code.storage[line][i]);
 
             newlex = false;
             i++;
@@ -111,7 +112,7 @@ std::ostream& operator<< (std::ostream& stream, Language::Lexem& lex) {
     if (lex == Language::Lexem("\n")) {
         stream << "</eol>";
     } else {
-        stream << lex.content;
+        stream << static_cast<std::string>(lex);
     }
 
     return stream;
